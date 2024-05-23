@@ -41,6 +41,8 @@ type ClusterScanSpec struct {
 type ClusterScanStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	LastScheduleTime *metav1.Time `json:"lastScheduleTime,omitempty"` // Last time the job was scheduled
+    LastSuccessfulTime *metav1.Time `json:"lastSuccessfulTime,omitempty"` // Last time the job succeeded
 }
 
 //+kubebuilder:object:root=true
