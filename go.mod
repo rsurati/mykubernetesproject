@@ -1,11 +1,15 @@
-//module github.com/rsurati/mykubernetesproject
+module github.com/rsurati/mykubernetesproject
 
-go 1.22.0
+go 1.22.3
 
 toolchain go1.22.3
 
 require (
-	sigs.k8s.io/controller-runtime/pkg/client  v1.2.3
+
+	k8s.io/api v0.18.8
+	
+
+	sigs.k8s.io/controller-runtime  v0.9.2
 	k8s.io/apimachinery v0.23.0
     sigs.k8s.io/controller-runtime v0.10.0
 	github.com/onsi/ginkgo/v2 v2.17.1
