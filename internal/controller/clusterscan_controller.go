@@ -52,11 +52,51 @@ type ClusterScanReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.3/pkg/reconcile
 func (r *ClusterScanReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log = log.FromContext(ctx)
 
 	// TODO(user): your logic here
 
-	return ctrl.Result{}, nil
+	// Code
+	// Fetch the ClusterScan instance
+	clusterScan := &batchv1alpha1.ClusterScan{}
+	err := r.Get(ctx, req.NamespacedName, clusterScan)
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Define the desired Job
+	job := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterScan.Name + "-job",
+			Namespace: clusterScan.Namespace,
+		},
+		Spec: clusterScan.Spec.JobTemplate,
+	}
+
+	// Set ClusterScan instance as the owner and controller
+	if err := controllerutil.SetControllerReference(clusterScan, job, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Check if the job already exists
+	found := &batchv1.Job{}
+	err = r.Get(ctx, types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, found)
+	if err != nil && client.IgnoreNotFound(err) != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err != nil && client.IgnoreNotFound(err) == nil {
+		log.Info("Creating a new Job", "Job.Namespace", job.Namespace, "Job.Name", job.Name)
+		err = r.Create(ctx, job)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		clusterScan.Status.LastScheduleTime = &metav1.Time{Time: time.Now()}
+		err = r.Status().Update(ctx, clusterScan)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
